@@ -8,13 +8,15 @@
 #include <iostream>
 #include <map>
 #include <list>
+#include <set>
 #include "leveldb/db.h"
 
-#define DBPATH  "./DBDATA/"
-#define MAXLENGTH 100000
+#define DBPATH  "./DBDATA"
+#define MAXLENGTH 1000000
 
 
 struct LDB {
+    int num;
     std::string dataBaseTopic;
     leveldb::DB *db;
 
@@ -27,7 +29,7 @@ struct LDB {
 
     LDB(std::string Topic);
 
-    static int Init();
+    static int Init(std::set<std::string> &topiclist);
 
     int _put(std::string key, std::string data);
 
@@ -41,7 +43,7 @@ struct LDB {
     static pthread_spinlock_t DBlock;
     static pthread_once_t one_spin;
 
-    static void  spin_init() {
+    static void spin_init() {
         pthread_spin_init(&DBlock, 0);
     }
 
@@ -61,8 +63,9 @@ struct LDB {
         return _ldb;
     }
 
+    static int appid;
 
-    std::map<std::string ,std::string> DATATEST;
+    std::map<std::string, std::string> DATATEST;
 };
 
 class opleveldb {
@@ -73,18 +76,25 @@ public:
 
     LDB *opinitdb(std::string Topic, long long consustartLine);
 
-    int opget(std::string topic, std::string *data);
+    int opget(std::string topic, std::string *data,long long &lineback);
+
+    int opgetline(std::string topic, std::string key, std::string *data);
 
     int opput(std::string topic, std::string data);
 
-    int setConsumerLine(std::string Topic, long long consustartLine);
+    int opputline(std::string topic, std::string key, std::string data);
+
+    int setStarConsumerLine(std::string Topic, long long consustartLine);
 
     void *t;
+    char *ClineAddr;
+    bool haveAck;
 private:
     int appid;
     int groupid;
     std::map<std::string, LDB *> TopicFindDB;
     std::map<std::string, long long> consumMapLine;
+
 };
 
 
